@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>README Scorecard</title>
+  <meta name="description" content="Paste a GitHub repo URL. Get an instant README grade — shareable, no install.">
+  <meta property="og:title" content="README Scorecard">
+  <meta property="og:description" content="How good is your README? Paste a repo URL and find out.">
+  <meta property="og:type" content="website">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0f;
+      --surface: #16171a;
+      --border: #2a2b2f;
+      --text: #e8e9ec;
+      --muted: #6b7080;
+      --accent: #7c6af7;
+      --green: #34d399;
+      --yellow: #fbbf24;
+      --red: #f87171;
+      --radius: 12px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 16px 80px;
+    }
+
+    header { text-align: center; margin-bottom: 40px; }
+    header h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.5px; }
+    header p { color: var(--muted); margin-top: 8px; font-size: 0.95rem; }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+      max-width: 560px;
+      margin-bottom: 40px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 0.95rem;
+      padding: 12px 16px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type="text"]::placeholder { color: var(--muted); }
+    input[type="text"]:focus { border-color: var(--accent); }
+
+    button {
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius);
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 12px 20px;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .error {
+      color: var(--red);
+      font-size: 0.88rem;
+      margin-top: -28px;
+      margin-bottom: 24px;
+      max-width: 560px;
+      width: 100%;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      max-width: 560px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 28px 28px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .grade-badge {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -2px;
+      flex-shrink: 0;
+    }
+
+    .grade-A  { color: var(--green); }
+    .grade-B  { color: #6ee7b7; }
+    .grade-Bp { color: #86efac; }
+    .grade-C  { color: var(--yellow); }
+    .grade-Cp { color: #fcd34d; }
+    .grade-D  { color: #fb923c; }
+    .grade-F  { color: var(--red); }
+
+    .card-header-text { flex: 1; min-width: 0; }
+    .repo-name { font-weight: 600; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .score-label { color: var(--muted); font-size: 0.85rem; margin-top: 2px; }
+    .verdict { color: var(--muted); font-size: 0.88rem; margin-top: 6px; line-height: 1.4; }
+
+    .checks {
+      padding: 20px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.88rem;
+      line-height: 1.4;
+    }
+    .check-icon { flex-shrink: 0; width: 18px; text-align: center; }
+    .check-pass { color: var(--text); }
+    .check-warn { color: var(--muted); }
+    .check-fail { color: var(--muted); }
+
+    .card-footer {
+      padding: 16px 28px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .share-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.82rem;
+      padding: 8px 14px;
+    }
+    .share-btn:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
+
+    .powered { color: var(--muted); font-size: 0.78rem; }
+    .powered a { color: var(--muted); text-decoration: none; }
+    .powered a:hover { color: var(--accent); }
+
+    .hidden { display: none; }
+
+    .spinner {
+      width: 22px; height: 22px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-wrap {
+      max-width: 560px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 32px 0;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: var(--text);
+      color: var(--bg);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 99px;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 480px) {
+      .input-row { flex-direction: column; }
+      .card-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .grade-badge { font-size: 2.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>README Scorecard</h1>
+  <p>Paste a public GitHub repo URL. Get an instant grade.</p>
+</header>
+
+<div class="input-row">
+  <input type="text" id="repoInput" placeholder="github.com/owner/repo" autocomplete="off" autocorrect="off" spellcheck="false">
+  <button id="gradeBtn" onclick="grade()">Grade it</button>
+</div>
+
+<div id="errorMsg" class="error hidden"></div>
+<div id="loadingWrap" class="loading-wrap hidden"><div class="spinner"></div></div>
+<div id="card" class="card hidden"></div>
+<div class="toast" id="toast">Link copied</div>
+
+<script>
+  // ── route: ?repo=owner/name ────────────────────────────────────────────────
+  const params = new URLSearchParams(location.search);
+  const preload = params.get('repo');
+  if (preload) {
+    document.getElementById('repoInput').value = 'github.com/' + preload;
+    window.addEventListener('DOMContentLoaded', grade);
+  }
+
+  document.getElementById('repoInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') grade();
+  });
+
+  // ── scoring — port of readme-review action.yml ────────────────────────────
+  function scoreReadme(content) {
+    const lines = content.split('\n');
+    const lineCount = lines.length;
+    let score = 0;
+    const checks = [];
+
+    // 1. Exists (always true here)
+    score += 10;
+    checks.push({ pass: true, text: 'README exists' });
+
+    // 2. Length >= 30 lines
+    if (lineCount >= 30) {
+      score += 10;
+      checks.push({ pass: true, text: `Sufficient length (${lineCount} lines)` });
+    } else {
+      checks.push({ warn: true, text: `Short README (${lineCount} lines — aim for 30+)` });
+    }
+
+    // 3. Has h1 title
+    if (lines.some(l => /^#[^#]/.test(l))) {
+      score += 5;
+      checks.push({ pass: true, text: 'Has a title' });
+    } else {
+      checks.push({ fail: true, text: 'Missing title (# heading)' });
+    }
+
+    // 4. Description paragraph after title (skip badges/blanks)
+    let foundTitle = false, foundPara = false, paraWords = 0;
+    for (const line of lines) {
+      if (!foundTitle && /^#[^#]/.test(line)) { foundTitle = true; continue; }
+      if (!foundTitle) continue;
+      if (/^\[!\[/.test(line)) continue;
+      if (line.trim() === '') { if (foundPara) break; continue; }
+      if (/^#/.test(line)) break;
+      paraWords += line.split(/\s+/).filter(Boolean).length;
+      foundPara = true;
+    }
+    if (paraWords >= 20) {
+      score += 10;
+      checks.push({ pass: true, text: `Has a description (${paraWords} words)` });
+    } else if (paraWords >= 1) {
+      score += 5;
+      checks.push({ warn: true, text: `Description is thin (${paraWords} words — aim for 20+)` });
+    } else {
+      checks.push({ fail: true, text: 'Missing description after title' });
+    }
+
+    // 5. Installation section
+    if (lines.some(l => /^#{1,3}.*install/i.test(l))) {
+      score += 10;
+      checks.push({ pass: true, text: 'Has installation section' });
+    } else {
+      checks.push({ fail: true, text: 'Missing installation section' });
+    }
+
+    // 6. Usage section
+    if (lines.some(l => /^#{1,3}.*usage/i.test(l))) {
+      score += 10;
+      checks.push({ pass: true, text: 'Has usage section' });
+    } else {
+      checks.push({ fail: true, text: 'Missing usage section' });
+    }
+
+    // 7. Code blocks
+    if (content.includes('```')) {
+      score += 10;
+      checks.push({ pass: true, text: 'Has code examples' });
+    } else {
+      checks.push({ fail: true, text: 'Missing code examples' });
+    }
+
+    // 8. License mention
+    if (/license|MIT|Apache|GPL|BSD/i.test(content)) {
+      score += 5;
+      checks.push({ pass: true, text: 'Mentions license' });
+    } else {
+      checks.push({ warn: true, text: 'No license mentioned' });
+    }
+
+    // 9. Contributing / links section
+    if (lines.some(l => /^#{1,3}.*(contribut|links|resources)/i.test(l))) {
+      score += 5;
+      checks.push({ pass: true, text: 'Has contributing / resources section' });
+    } else {
+      checks.push({ warn: true, text: 'No contributing section' });
+    }
+
+    // 10. Badges
+    if (/!\[.*\]\(.*\.(svg|png|badge)|shields\.io|badgen\.net|img\.shields/i.test(content)) {
+      score += 5;
+      checks.push({ pass: true, text: 'Has badges' });
+    } else {
+      checks.push({ warn: true, text: 'No badges' });
+    }
+
+    // 11. Structure >= 4 headings
+    const headingCount = lines.filter(l => /^#{1,3} /.test(l)).length;
+    if (headingCount >= 4) {
+      score += 10;
+      checks.push({ pass: true, text: `Well-structured (${headingCount} sections)` });
+    } else if (headingCount >= 2) {
+      score += 5;
+      checks.push({ warn: true, text: `Needs more structure (${headingCount} sections — aim for 4+)` });
+    } else {
+      checks.push({ fail: true, text: `Poorly structured (${headingCount} sections)` });
+    }
+
+    let grade;
+    if      (score >= 90) grade = 'A';
+    else if (score >= 80) grade = 'B+';
+    else if (score >= 70) grade = 'B';
+    else if (score >= 60) grade = 'C+';
+    else if (score >= 50) grade = 'C';
+    else if (score >= 40) grade = 'D';
+    else                  grade = 'F';
+
+    return { score, grade, checks };
+  }
+
+  function verdictFor(score) {
+    if (score >= 90) return "Your README is doing its job — contributors know what they're getting into before they clone.";
+    if (score >= 70) return "Good foundation. The gaps above are what make visitors bounce before they try it.";
+    if (score >= 50) return "Halfway there. A stranger landing here has questions you haven't answered yet.";
+    return "A README this thin loses contributors before they read the first line of code.";
+  }
+
+  function gradeClass(g) { return 'grade-' + g.replace('+', 'p'); }
+
+  // ── fetch + render ─────────────────────────────────────────────────────────
+  async function grade() {
+    const raw = document.getElementById('repoInput').value.trim();
+    const errEl = document.getElementById('errorMsg');
+    const cardEl = document.getElementById('card');
+    const loadEl = document.getElementById('loadingWrap');
+    const btn = document.getElementById('gradeBtn');
+
+    errEl.classList.add('hidden');
+    cardEl.classList.add('hidden');
+
+    const match = raw
+      .replace(/^https?:\/\//, '')
+      .replace(/^github\.com\//, '')
+      .match(/^([\w.-]+)\/([\w.-]+)/);
+
+    if (!match) {
+      errEl.textContent = 'Paste a GitHub repo URL like github.com/owner/repo';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    const [, owner, repo] = match;
+    const repoSlug = `${owner}/${repo}`;
+
+    btn.disabled = true;
+    loadEl.classList.remove('hidden');
+
+    // update URL so this page is the permalink before fetch completes
+    const u = new URL(location.href);
+    u.searchParams.set('repo', repoSlug);
+    history.replaceState(null, '', u);
+
+    try {
+      const res = await fetch(`https://raw.githubusercontent.com/${repoSlug}/HEAD/README.md`);
+      if (res.status === 404) throw new Error('No README.md found in this repo.');
+      if (!res.ok) throw new Error(`Couldn't fetch README (${res.status}). Is the repo public?`);
+      const content = await res.text();
+      const { score, grade, checks } = scoreReadme(content);
+      renderCard(repoSlug, score, grade, checks);
+    } catch (e) {
+      errEl.textContent = e.message;
+      errEl.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      loadEl.classList.add('hidden');
+    }
+  }
+
+  function renderCard(repoSlug, score, grade, checks) {
+    const cardEl = document.getElementById('card');
+    const gc = gradeClass(grade);
+    const verdict = verdictFor(score);
+    const permalink = `${location.origin}${location.pathname}?repo=${repoSlug}`;
+
+    const checksHtml = checks.map(c => {
+      const icon = c.pass ? '✅' : c.warn ? '⚠️' : '❌';
+      const cls = c.pass ? 'check-pass' : c.warn ? 'check-warn' : 'check-fail';
+      return `<div class="check-row ${cls}"><span class="check-icon">${icon}</span><span>${c.text}</span></div>`;
+    }).join('');
+
+    // escape permalink for inline onclick — single-quote safe
+    const safePermalink = permalink.replace(/'/g, '%27');
+
+    cardEl.innerHTML = `
+      <div class="card-header">
+        <div class="grade-badge ${gc}">${grade}</div>
+        <div class="card-header-text">
+          <div class="repo-name">${repoSlug}</div>
+          <div class="score-label">${score} / 100</div>
+          <div class="verdict">${verdict}</div>
+        </div>
+      </div>
+      <div class="checks">${checksHtml}</div>
+      <div class="card-footer">
+        <button class="share-btn" onclick="copyLink('${safePermalink}')">Copy link</button>
+        <span class="powered">powered by <a href="https://github.com/iteebz/readme-review" target="_blank">readme-review</a></span>
+      </div>
+    `;
+    cardEl.classList.remove('hidden');
+    cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function copyLink(url) {
+    navigator.clipboard.writeText(url).then(() => {
+      const t = document.getElementById('toast');
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
+    });
+  }
+</script>
+</body>
+</html>
