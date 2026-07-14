@@ -376,6 +376,24 @@
 
   function gradeClass(g) { return 'grade-' + g.replace('+', 'p'); }
 
+  function badgeColor(grade) {
+    if (grade === 'A')  return 'brightgreen';
+    if (grade === 'B+') return 'green';
+    if (grade === 'B')  return '4ec994';
+    if (grade === 'C+') return 'yellow';
+    if (grade === 'C')  return 'yellow';
+    if (grade === 'D')  return 'orange';
+    return 'red';
+  }
+
+  function badgeMarkdown(repoSlug, grade, permalink) {
+    const label = encodeURIComponent('README Score');
+    const gradeEnc = encodeURIComponent(grade);
+    const color = badgeColor(grade);
+    const badge = `https://img.shields.io/badge/${label}-${gradeEnc}-${color}`;
+    return `[![README Score](${badge})](${permalink})`;
+  }
+
   // ── fetch + render ─────────────────────────────────────────────────────────
   async function grade() {
     const raw = document.getElementById('repoInput').value.trim();
@@ -465,6 +483,7 @@
       <div class="card-footer">
         <div style="display:flex;gap:8px;">
           <button class="share-btn" onclick="copyLink('${safePermalink}', '${repoSlug}', '${grade}')">Copy link</button>
+          <button class="share-btn" onclick="copyBadge('${safePermalink}', '${repoSlug}', '${grade}')">Copy badge</button>
           <button class="share-btn" onclick="tweetLink('${safePermalink}', '${repoSlug}', '${grade}')">Post to X</button>
         </div>
         <span class="powered">powered by <a href="https://github.com/iteebz/readme-review" target="_blank">readme-review</a></span>
@@ -483,6 +502,16 @@
       const t = document.getElementById('toast');
       t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 2000);
+    });
+  }
+
+  function copyBadge(url, repo, grade) {
+    const md = badgeMarkdown(repo, grade, url);
+    navigator.clipboard.writeText(md).then(() => {
+      const t = document.getElementById('toast');
+      t.textContent = 'Badge copied — paste into your README';
+      t.classList.add('show');
+      setTimeout(() => { t.classList.remove('show'); t.textContent = 'Link copied'; }, 2500);
     });
   }
 
