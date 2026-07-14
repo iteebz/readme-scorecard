@@ -434,6 +434,9 @@
     const verdict = verdictFor(score);
     const permalink = `${location.origin}${location.pathname}?repo=${repoSlug}`;
 
+    // update page title so browser tab and shared links are meaningful
+    document.title = `${repoSlug} — ${grade} · README Scorecard`;
+
     const checksHtml = checks.map(c => {
       const icon = c.pass ? '✅' : c.warn ? '⚠️' : '❌';
       const cls = c.pass ? 'check-pass' : c.warn ? 'check-warn' : 'check-fail';
@@ -454,7 +457,7 @@
       </div>
       <div class="checks">${checksHtml}</div>
       <div class="card-footer">
-        <button class="share-btn" onclick="copyLink('${safePermalink}')">Copy link</button>
+        <button class="share-btn" onclick="copyLink('${safePermalink}', '${repoSlug}', '${grade}')">Copy link</button>
         <span class="powered">powered by <a href="https://github.com/iteebz/readme-review" target="_blank">readme-review</a></span>
       </div>
     `;
@@ -462,8 +465,12 @@
     cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  function copyLink(url) {
-    navigator.clipboard.writeText(url).then(() => {
+  function copyLink(url, repo, grade) {
+    // share text makes the link self-explanatory when pasted on Slack/Twitter
+    const text = grade
+      ? `${repo} got a ${grade} on README Scorecard — see yours: ${url}`
+      : url;
+    navigator.clipboard.writeText(text).then(() => {
       const t = document.getElementById('toast');
       t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 2000);
