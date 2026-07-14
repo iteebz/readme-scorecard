@@ -232,7 +232,9 @@
   const preload = params.get('repo');
   if (preload) {
     document.getElementById('repoInput').value = 'github.com/' + preload;
-    window.addEventListener('DOMContentLoaded', grade);
+    // script runs after body is parsed — DOMContentLoaded has already fired.
+    // calling grade() directly is correct; the listener would never trigger.
+    grade();
   }
 
   document.getElementById('repoInput').addEventListener('keydown', e => {
