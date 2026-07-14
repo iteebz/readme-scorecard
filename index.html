@@ -83,11 +83,12 @@
     .error {
       color: var(--red);
       font-size: 0.88rem;
-      margin-top: -28px;
       margin-bottom: 24px;
       max-width: 560px;
       width: 100%;
     }
+
+    .input-row.secondary { margin-top: 28px; margin-bottom: 0; }
 
     .card {
       background: var(--surface);
@@ -217,17 +218,17 @@
 
 <header>
   <h1>README Scorecard</h1>
-  <p>Paste a public GitHub repo URL. Get an instant grade.</p>
+  <p id="tagline">Paste a public GitHub repo URL. Get an instant grade.</p>
 </header>
 
-<div class="input-row">
+<div id="loadingWrap" class="loading-wrap hidden"><div class="spinner"></div></div>
+<div id="card" class="card hidden"></div>
+<div id="errorMsg" class="error hidden"></div>
+
+<div class="input-row" id="inputRow">
   <input type="text" id="repoInput" placeholder="github.com/owner/repo" autocomplete="off" autocorrect="off" spellcheck="false">
   <button id="gradeBtn" onclick="grade()">Grade it</button>
 </div>
-
-<div id="errorMsg" class="error hidden"></div>
-<div id="loadingWrap" class="loading-wrap hidden"><div class="spinner"></div></div>
-<div id="card" class="card hidden"></div>
 <div class="toast" id="toast">Link copied</div>
 
 <script>
@@ -488,7 +489,14 @@
       </div>
     `;
     cardEl.classList.remove('hidden');
-    cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // arrival mode: the card is now the hero. the input drops below and
+    // becomes the conversion — the viewer of THIS grade checks their own.
+    document.getElementById('tagline').textContent = 'Now grade yours ↓';
+    const row = document.getElementById('inputRow');
+    row.classList.add('secondary');
+    document.getElementById('repoInput').value = '';
+    document.getElementById('gradeBtn').textContent = 'Grade my repo';
   }
 
   function copyLink(url, repo, grade) {
