@@ -404,8 +404,17 @@
     history.replaceState(null, '', u);
 
     try {
-      const res = await fetch(`https://raw.githubusercontent.com/${repoSlug}/HEAD/README.md`);
-      if (res.status === 404) throw new Error('No README.md found in this repo.');
+      // GitHub renders README case-insensitively but raw.githubusercontent is exact.
+      // Try common filename casings — sindresorhus/awesome and thousands use lowercase.
+      const names = ['README.md', 'readme.md', 'Readme.md', 'README.markdown', 'README.rst', 'README.txt', 'README'];
+      let res = null;
+      for (const name of names) {
+        const r = await fetch(`https://raw.githubusercontent.com/${repoSlug}/HEAD/${name}`);
+        if (r.ok) { res = r; break; }
+        if (r.status !== 404) { res = r; break; }
+      }
+      if (!res) throw new Error('No README found in this repo.');
+      if (res.status === 404) throw new Error('No README found in this repo.');
       if (!res.ok) throw new Error(`Couldn't fetch README (${res.status}). Is the repo public?`);
       const content = await res.text();
       const { score, grade, checks } = scoreReadme(content);
